@@ -1,0 +1,26 @@
+백석대학교 23년도 2학기 수업 웹 크롤링과 데이터 마이닝 프로젝트
+
+Project 목적
+1. 인천 국제 공항 페이지에서 제공하는 항공 데이터와 통계청 사이트에서 제공하는 통계 데이터들의 비교를 통한 여객 인원 차이 연구 (selenium)
+2. 중고 거래 사이트 (네이버카페 - 중고나라, 번개장터)에서 거래중인 품목의 가격을 비교하여 최저가 검색 (request 이용)
+
+Project를 함에 있어 필요한 라이브러리 및 SW
+1. Python 3
+2. request
+3. selenium
+4. bs4
+-- 데이터 추출 및 검증용 라이브러리 --
+5. openxlxs
+6. pandas
+
+각 폴더별 구성
+
+- main
+L main.py : 메인 소스코드로 실제 결과물을 볼 수 있도록 할 예정입니다.
+
+- source
+L air_crowling.py : 인천 국제 공항 페이지 크롤링 코드
+  bungaganto.py : 번개장터 페이지 크롤링 코드
+  jounggonara.py : 중고나라 페이지 크롤링 코드
+  Statistical_Office.py : 통계청 페이지 크롤링 코드
+  

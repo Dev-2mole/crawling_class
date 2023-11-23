@@ -41,7 +41,7 @@ class bungaganto_Crawler(InfoCrawler):
 
     def __init__(self):
         super().__init__()
-        self.base_url = "https://m.bunjang.co.kr/search/products?q=32QN650"
+        self.base_url = "https://m.bunjang.co.kr/search/products?q="
         self.headers = {
             'User-Agent': self.set_random_user_agent(),
             'referer': "https://m.bunjang.co.kr/",
@@ -62,13 +62,14 @@ class bungaganto_Crawler(InfoCrawler):
 
         # 크롬 드라이버 최신 버전 설정
         service = ChromeService(executable_path=ChromeDriverManager().install())
-
         # chrome driver
         self.driver = webdriver.Chrome(service=service, options=options)
 
-        # 번개장터 웹 페이지 열기
-        self.driver.get(self.base_url)
+        query = "32QN650"
+        URL = self.base_url + query 
 
+        # 번개장터 웹 페이지 열기
+        self.driver.get(URL)
 
         sleep(10)
         # 웹 드라이버 종료

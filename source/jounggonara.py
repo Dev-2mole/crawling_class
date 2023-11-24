@@ -4,7 +4,10 @@
 
 import requests
 import random
-from time import sleep
+from bs4 import BeautifulSoup
+import pandas as pd
+import os
+
 
 class InfoCrawler():
     def __init__(self):
@@ -33,18 +36,57 @@ class InfoCrawler():
         self.headers['User-Agent'] = user_agent
         return user_agent
 
-class bungaganto_Crawler(InfoCrawler):
+class jounggonara_Crawler(InfoCrawler):
 
     def __init__(self):
         super().__init__()
-        self.base_url = "https://m.bunjang.co.kr/search/products?q="
+        self.base_url = "https://web.joongna.com/search/"
         self.headers = {
             'User-Agent': self.set_random_user_agent(),
-            'referer': "https://m.bunjang.co.kr/",
+            'referer': "https://web.joongna.com/",
             'Cache-Control': 'no-cache',
             'Content-Type': 'application/x-www-form-urlencoded',
         }
         self.get_code()
 
     def get_code(self):
-        print("testing")
+        query = "32QN650"
+        target_URL = self.base_url + query
+        response = requests.get(target_URL, headers=self.headers)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        items = soup.select('#__next > div > main > div:nth-child(1) > div:nth-child(2) > ul > li')
+        return items
+
+    def parse_items(self, items):
+        data = []
+        for item in items:
+            title = item.find('h2', class_='line-clamp-2').get_text(strip=True) if item.find('h2', class_='line-clamp-2') else '제목 없음'
+            price = item.find('div', class_='font-semibold').get_text(strip=True) if item.find('div', class_='font-semibold') else '가격 정보 없음'
+
+            reservation_div = item.find('div', string='예약중')
+            reservation_status = '예약중' if reservation_div else '없음'
+
+            data.append({
+                'title': title,
+                'price': price,
+                'reservation_status': reservation_status
+            })
+        return data
+
+
+    def save_to_excel(self, data):
+        df = pd.DataFrame(data)
+        current_directory = os.getcwd()
+        directory = os.path.join(current_directory, 'data', 'jounggonara')
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        df.to_excel(os.path.join(directory, 'jounggonara_data.xlsx'), index=False)
+
+def main():
+    crawler = jounggonara_Crawler()
+    items = crawler.get_code()
+    data = crawler.parse_items(items)
+    crawler.save_to_excel(data)
+
+if __name__ == "__main__":
+    main()

@@ -1,6 +1,7 @@
 # 이 페이지는 인천 국제 항공 공사의 지역별 여객 데이터를 가져올 예정입니다.
 # 가져온 데이터는 엑셀로 받아와 ../data/air 폴더에 저장할 예정입니다.
 
+import os
 import random
 from time import sleep
 # from datetime import *
@@ -59,15 +60,28 @@ class air_Crawler(InfoCrawler):
             'Content-Type': 'application/x-www-form-urlencoded',
         }
         self.set_random_user_agent()
-
+        # 다운로드 경로 설정
+        download_path = os.path.join(os.getcwd(), 'data', 'air')
+        # 해당 경로에 폴더가 없으면 생성
+        if not os.path.exists(download_path):
+            os.makedirs(download_path)
+        #
         options = ChromeOptions()
-        options.add_argument(f"user-agent={self.headers['User-Agent']}")  # 수정된 부분
+        options.add_argument(f"user-agent={self.headers['User-Agent']}")
         options.add_argument("lang=ko_KR")
+        # 로그 레벨을 SEVERE로 설정   => 심각한 오류만 표기됨
+        options.add_argument('--log-level=3')
         # headless 모드 비활성화
         # options.add_argument('headless')
         options.add_argument("start-maximized")
         options.add_argument("disable-gpu")
         options.add_argument("--no-sandbox")
+        options.add_experimental_option('prefs', {
+            "download.default_directory": download_path,  # 다운로드 경로 설정
+            "download.prompt_for_download": False,  # 다운로드시 자동으로 저장
+            "download.directory_upgrade": True,
+            "safebrowsing.enabled": True
+        })
 
         # 크롬 드라이버 최신 버전 설정
         service = ChromeService(executable_path=ChromeDriverManager().install())
@@ -101,10 +115,32 @@ class air_Crawler(InfoCrawler):
         # 여기 아래부터는 직접 생각해보시면서 작성해보세요
         # 남은건 날짜 (월, 년별 지정하는 것, 검색버튼 누르기 , 출력된 결과값들을 가져오기)
         
-        # hint
-        #print("페이지 소스 코드:")
-        #print(self.driver.page_source)
+        start_year = 2017
+        end_year = 2022
+        # 연도별 옵션 인덱스 계산 (역순)
+        for year in range(start_year, end_year + 1):
+            year_option_index = end_year - year + 2
 
+            # 시작 연도 선택
+            self.driver.find_element(By.CSS_SELECTOR, "#S_YEAR")
+            self.driver.find_element(By.XPATH, f'//*[@id="S_YEAR"]/option[{year_option_index}]').click()
+
+            # 시작 월 선택 (1월 고정)
+            self.driver.find_element(By.CSS_SELECTOR, "#S_MONTH")
+            self.driver.find_element(By.XPATH, '//*[@id="S_MONTH"]/option[1]').click()
+
+            # 종료 연도 선택
+            self.driver.find_element(By.CSS_SELECTOR, "#E_YEAR")
+            self.driver.find_element(By.XPATH, f'//*[@id="E_YEAR"]/option[{year_option_index}]').click()
+
+            # 종료 월 선택 (12월 고정)
+            self.driver.find_element(By.CSS_SELECTOR, '#E_MONTH')
+            self.driver.find_element(By.XPATH, '//*[@id="E_MONTH"]/option[12]').click()
+
+            sleep(3)
+            # 다운로드 버튼 클릭
+            self.driver.find_element(By.CLASS_NAME, "btn-type-small.point.ico.download").click()
+        
         sleep(10)
         # 웹 드라이버 종료
         self.driver.quit()

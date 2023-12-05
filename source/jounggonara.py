@@ -64,7 +64,7 @@ class jounggonara_Crawler(InfoCrawler):
             price = item.find('div', class_='font-semibold').get_text(strip=True) if item.find('div', class_='font-semibold') else '가격 정보 없음'
 
             reservation_div = item.find('div', string='예약중')
-            reservation_status = '예약중' if reservation_div else '없음'
+            reservation_status = '예약중' if reservation_div else '판매중'
 
             # 하이퍼링크 추출을 위한 수정된 선택자
             link_element = item.select_one('a')  # 각 항목 내의 첫 번째 <a> 태그 선택

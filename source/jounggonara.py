@@ -66,10 +66,17 @@ class jounggonara_Crawler(InfoCrawler):
             reservation_div = item.find('div', string='예약중')
             reservation_status = '예약중' if reservation_div else '없음'
 
+            # 하이퍼링크 추출을 위한 수정된 선택자
+            link_element = item.select_one('a')  # 각 항목 내의 첫 번째 <a> 태그 선택
+            link = link_element['href'] if link_element else '링크 없음'
+            # 하이퍼링크에 url 추가
+            product_link = "https://web.joongna.com/"+link
+
             data.append({
                 'title': title,
                 'price': price,
-                'reservation_status': reservation_status
+                'reservation_status': reservation_status,
+                'link': product_link  # 하이퍼링크 추가
             })
         return data
 
@@ -83,9 +90,57 @@ class jounggonara_Crawler(InfoCrawler):
         df.to_excel(os.path.join(directory, 'jounggonara_data.xlsx'), index=False)
 
 def main():
+    # naver_market.xlsx에서 B2 셀의 값을 읽기
+    naver_market_directory = os.path.join(os.getcwd(), 'data', 'naver_market')
+    naver_market_file = os.path.join(naver_market_directory, 'naver_market.xlsx')
+    naver_market_df = pd.read_excel(naver_market_file)
+    b2_value_str = naver_market_df.iloc[0, 1]  # B2 셀의 값 (문자열)
+    b2_value = int(b2_value_str.replace(',', ''))  # 문자열에서 쉼표 제거 후 정수로 변환
+
+    # 크롤링 및 데이터 처리
     crawler = jounggonara_Crawler()
     items = crawler.get_code()
     data = crawler.parse_items(items)
+
+    # 가격 비교 및 새로운 열 추가
+    for item in data:
+        price_str = item['price'].replace('원', '').replace(',', '')  # 가격에서 '원'과 쉼표 제거
+        price = int(price_str) if price_str.isdigit() else 0  # 정수 변환
+        if price < b2_value / 2:
+            item['price_comparison'] = '너무 가격이 낮습니다.'
+        elif price > b2_value * 2:
+            item['price_comparison'] = '너무 가격이 높습니다.'
+        else:
+            item['price_comparison'] = '이상없음'
+
+    # 가격 데이터 추출 및 변환
+    prices = [int(item['price'].replace('원', '').replace(',', '')) if '원' in item['price'] else 0 for item in data]
+
+    # 전체 평균 가격 계산
+    average_price = int(sum(prices) / len(prices)) if prices else 0
+
+    # "이상없음" 항목 필터링 및 가격 데이터 추출
+    normal_items = [item for item in data if item['price_comparison'] == '이상없음']
+    normal_prices = [int(item['price'].replace('원', '').replace(',', '')) if '원' in item['price'] else 0 for item in normal_items]
+
+    # "이상없음" 항목의 평균 가격 계산
+    average_normal_price = int(sum(normal_prices) / len(normal_prices)) if normal_prices else 0
+
+    # 평균 가격 차이 계산
+    price_difference = abs(average_normal_price - average_price)
+
+    # "이상없음" 항목 중 가장 높은 가격과 가장 낮은 가격 찾기
+    highest_price = max(normal_prices) if normal_prices else 0
+    lowest_price = min(normal_prices) if normal_prices else 0
+
+    # 결과 출력
+    print(f"전체 평균 가격: {average_price}")
+    print(f"'이상없음' 항목의 평균 가격: {average_normal_price}")
+    print(f"평균 가격 차이: {price_difference}")
+    print(f"'이상없음' 항목 중 가장 높은 가격: {highest_price}")
+    print(f"'이상없음' 항목 중 가장 낮은 가격: {lowest_price}")
+
+    # 엑셀 파일로 저장
     crawler.save_to_excel(data)
 
 if __name__ == "__main__":

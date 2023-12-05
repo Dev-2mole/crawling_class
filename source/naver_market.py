@@ -50,7 +50,7 @@ class naver_market(InfoCrawler):
         self.get_code()
 
     def get_code(self):
-        query = "C27G54T"
+        query = "32QN650"
         target_URL = self.base_url + query
         response = requests.get(target_URL, headers=self.headers)
         

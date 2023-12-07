@@ -6,14 +6,12 @@ import random
 from time import sleep
 # from datetime import *
 from selenium import webdriver
-from selenium.webdriver import ActionChains
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 # 기본적인 크롤링에 필요한 우회 계정 정보 (수정 필요 없음)
 class InfoCrawler():
@@ -96,28 +94,25 @@ class Statistical_Office_Crawler(InfoCrawler):
         # 항공청사 웹 페이지 열기
         self.driver.get(self.base_url)
 
-        # 로딩창 조건 대기용 함수
-        def loading_invisible(driver):
-            loading_element = driver.find_element(By.ID, "Loading")
-            print("확인중")
-            # 로딩 요소의 'display' 스타일 속성이 'none'일 때 True 반환
-            return "display: none;" in loading_element.get_attribute("style")
+        
 
         # 홍보센터 메뉴 찾기
         sleep(2)
         menu = self.driver.find_element(By.LINK_TEXT, "쉽게 보는 통계")
         menu.click()
+
         # 통계시각화콘텐츠이동
         sleep(2)
         menu2 = self.driver.find_element(By.LINK_TEXT, "통계시각화콘텐츠")
         menu2.click()
+
         # 세계속의 한국 메뉴 이동
         sleep(2)
         menu3 = self.driver.find_element(By.LINK_TEXT, "세계속의 한국")
         menu3.click()
 
         # 새 탭으로 전환
-        sleep(2)  # 새 탭이 완전히 로드될 때까지 기다립니다.
+        sleep(2)  
         all_windows = self.driver.window_handles  # 모든 탭의 핸들을 가져옵니다.
         new_tab = all_windows[1]  # 새 탭의 핸들을 얻습니다. (0은 처음 탭, 1은 새 탭)
         self.driver.switch_to.window(new_tab)  # 새 탭으로 전환합니다.
@@ -131,35 +126,45 @@ class Statistical_Office_Crawler(InfoCrawler):
         sleep(3)
         stat_table_button = self.driver.find_element(By.CLASS_NAME, "statgo2")
         stat_table_button.click()
+
         # 클릭시 새로운 크롬 창이 열림
         sleep(5)
-        all_windows = self.driver.window_handles  # 모든 탭의 핸들을 가져옵니다.
-        new_window = all_windows[-1]  # 새 탭의 핸들을 얻습니다. (0은 처음 탭, 1은 새 탭)
-        self.driver.switch_to.window(new_window)  # 새 탭으로 전환합니다.
+        all_windows = self.driver.window_handles  # 모든 탭의 핸들을 가져옴
+        new_window = all_windows[-1]  # 새 창의 핸들 획득 (-1 : 새 창)
+        self.driver.switch_to.window(new_window)  # 새 창으로 전환
+
+        # 로딩창 조건 대기용 함수
+        def loading_invisible(driver):
+            loading_element = driver.find_element(By.ID, "Loading")
+            print("확인중")
+            # 로딩 요소의 'display' 스타일 속성이 'none'일 때 True 반환
+            return "display: none;" in loading_element.get_attribute("style")
+
+        # 로딩 페이지 확인
+        WebDriverWait(self.driver, 20).until(loading_invisible)
+        print("로딩창 확인완료")
+        
+        # 여기 부분부터 버튼 선택에 대해 서칭이 안되는 문제점이 확인되어 중단하였습니다.
 
         # '시점' 버튼 클릭
-        WebDriverWait(self.driver, 10).until(loading_invisible)
-        print("로딩창 확인완료")
-        sleep(3)
-        # time_button = self.driver.find_element(By.ID, "btn_time")
-        # time_button.click()
+        sleep(5)
+        time_button = self.driver.find_element(By.ID, "btn_time")
+        time_button.click()
 
+        # 최근 5년 선택
         sleep(5)
         select_element = self.driver.find_element(By.ID, "samePrdseYear_Y")
         select_object = Select(select_element)
         select_object.select_by_value("5")
 
-
-        # 통계표 보기 이동
+        # 다운로드
         sleep(2)
         menu6 = self.driver.find_element(By.LINK_TEXT, "다운로드")
         menu6.click()
 
-
         sleep(10)
         # 웹 드라이버 종료
         self.driver.quit()
-
 
 
 crawler = Statistical_Office_Crawler()

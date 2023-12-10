@@ -120,7 +120,7 @@ def main():
     average_price = int(sum(prices) / len(prices)) if prices else 0
 
     # "이상없음" 항목 필터링 및 가격 데이터 추출
-    normal_items = [item for item in data if item['price_comparison'] == '이상없음']
+    normal_items = [item for item in data if item['price_comparison'] == '이상없음' and item['상태'] == '판매중']
     normal_prices = [int(item['price'].replace('원', '').replace(',', '')) if '원' in item['price'] else 0 for item in normal_items]
 
     # "이상없음" 항목의 평균 가격 계산
@@ -129,19 +129,43 @@ def main():
     # 평균 가격 차이 계산
     price_difference = abs(average_normal_price - average_price)
 
-    # "이상없음" 항목 중 가장 높은 가격과 가장 낮은 가격 찾기
-    highest_price = max(normal_prices) if normal_prices else 0
-    lowest_price = min(normal_prices) if normal_prices else 0
+   # '이상없음' 항목 중 가장 높은 가격과 가장 낮은 가격을 찾기
+    highest_price_item = None
+    lowest_price_item = None
+    highest_price = 0
+    lowest_price = float('inf')  # 무한대 값으로 초기화
+
+    for item in data:
+        price_str = item['price'].replace('원', '').replace(',', '')  # 가격에서 '원'과 쉼표 제거
+        price = int(price_str) if price_str.isdigit() else 0  # 정수 변환
+
+        if item['price_comparison'] == '이상없음':
+            if price > highest_price:
+                highest_price = price
+                highest_price_item = item
+            if price < lowest_price:
+                lowest_price = price
+                lowest_price_item = item
 
     # 결과 출력
     print(f"전체 평균 가격: {average_price}")
-    print(f"'이상없음' 항목의 평균 가격: {average_normal_price}")
+    print(f"기준치 이내 항목의 평균 가격: {average_normal_price}")
     print(f"평균 가격 차이: {price_difference}")
-    print(f"'이상없음' 항목 중 가장 높은 가격: {highest_price}")
-    print(f"'이상없음' 항목 중 가장 낮은 가격: {lowest_price}")
+
+    if highest_price_item:
+        highest_price_url = highest_price_item['link']
+        print(f"기준치 이내 중 판매중인 항목 중 가장 높은 가격: {highest_price}")
+        print(f"기준치 이내 중 판매중인 항목 중 가장 높은 가격을 가지는 아이템의 URL: {highest_price_url}")
+
+    if lowest_price_item:
+        lowest_price_url = lowest_price_item['link']
+        print(f"기준치 이내 중 판매중인 항목 중 가장 낮은 가격: {lowest_price}")
+        print(f"기준치 이내 중 판매중인 항목 중 가장 낮은 가격을 가지는 아이템의 URL: {lowest_price_url}")
+
 
     # 엑셀 파일로 저장
     crawler.save_to_excel(data)
+
 
 if __name__ == "__main__":
     main()

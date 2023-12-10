@@ -3,6 +3,7 @@
 
 
 # 아래 코드는 기존 데이터 있을 경우 압축 처리 진행해줄 코드입니다.
+# 영어 주석 연습중이라 많이 이상합니다..
 
 import os
 import sys
@@ -18,60 +19,62 @@ from source import data
 from source import jounggonara
 from source import naver_market
 
-
-def compress_data_folder(root_folder):
+# Data Backup Folder 
+def backup_data_folder(root_folder):
+    # Folder Location
     data_folder = os.path.join(root_folder, 'data')
     backup_folder = os.path.join(root_folder, 'backup_data')
 
-    # backup_data 폴더가 없으면 생성
+    # Folder Check
     if not os.path.exists(backup_folder):
         os.makedirs(backup_folder)
 
-    # 현재 날짜와 시간을 기준으로 압축 파일 이름 생성
+    # File Name Format : YYYYMMDD_HHMM
     now = datetime.now().strftime("%Y%m%d_%H%M")
     archive_name = os.path.join(backup_folder, f"data_backup_{now}")
 
-    # /data 폴더가 존재하면 압축
+    # Data Folder Compressing for backup  
     if os.path.exists(data_folder):
         shutil.make_archive(archive_name, 'zip', data_folder)
-        # 압축 후 /data 폴더 삭제
-        shutil.rmtree(data_folder)
+        shutil.rmtree(data_folder)                      # delete data folder
         print(f"압축 완료: {archive_name}.zip")
     else:
         print("/data 폴더가 존재하지 않습니다.")
 
-# 기존 data 폴더 삭제 및 삭제 
+# Data Clean & Backup
 print("=============================================")
 print("기존 데이터가 있는지 확인하고, 있을 경우 데이터 백업처리를 진행합니다.")
-compress_data_folder(current_directory)
+backup_data_folder(current_directory)
 
-# air_crowling.py   실행
+# Run air_crowling.py 
 print("=============================================")
 print("항공 데이터 crowling is start (onground)")
 air_crowling.main()
 print("항공 데이터 is complete")
 
-# data.py   실행
+# Run data.py
 print("=============================================")
 print("항공 데이터 분석&시각화 is start (background)")
 data.main()
 print("항공 데이터 분석&시각화 is complete")
 
-# naver_market.py 실행
+# Run naver_market.py
 print("=============================================")
 print("네이버 마켓 crowling is start (background)")
 naver_market.main()
 print("네이버 마켓 is complete")
 
-# bungaganto.py 실행
+# Run bungaganto.py
 print("=============================================")
 print("번개장터 crowling is start (background)")
 bungaganto.main()
 print("번개장터 is complete")
 
-# jounggonara.py 실행
+# Run jounggonara.py
 print("=============================================")
 print("중고나라 crowling is start (background)")
 jounggonara.main()
 print("중고나라 is complete")
 
+# Program end
+print("=============================================")

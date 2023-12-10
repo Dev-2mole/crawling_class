@@ -1,5 +1,5 @@
 # 이 페이지는 번개장터 페이지에서 데이터를 받아올 소스코드입니다.
-# 페이지 결과는 ../data/air 폴더에 저장될 예정입니다.
+# 페이지 결과는 ../data/bungaganto 폴더에 저장될 예정입니다.
 
 import random
 from time import sleep
@@ -18,7 +18,7 @@ class InfoCrawler():
         self.headers = {}
         self.user_agent_list = [
             #Chrome
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36'
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
@@ -26,7 +26,7 @@ class InfoCrawler():
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
 
             #Firefox
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:96.0) Gecko/20100101 Firefox/96.0'
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:96.0) Gecko/20100101 Firefox/96.0',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:96.0) Gecko/20100101 Firefox/95.0',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:96.0) Gecko/20100101 Firefox/94.0',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:96.0) Gecko/20100101 Firefox/93.0',
@@ -114,6 +114,25 @@ class bungaganto_Crawler(InfoCrawler):
         filepath = os.path.join(directory, filename)
         df.to_excel(filepath, index=False)
 
+def find_extreme_price_item(items, key, is_highest=True):
+    extreme_item = None
+    extreme_price = float('-inf') if is_highest else float('inf')
+
+    for item in items:
+        price_str = item[key].replace('원', '').replace(',', '')
+        price = int(price_str) if price_str.isdigit() else 0
+
+        if is_highest:
+            if price > extreme_price:
+                extreme_price = price
+                extreme_item = item
+        else:
+            if price < extreme_price:
+                extreme_price = price
+                extreme_item = item
+
+    return extreme_item, extreme_price
+
 def main():
     naver_market_directory = os.path.join(os.getcwd(), 'data', 'naver_market')
     naver_market_file = os.path.join(naver_market_directory, 'naver_market.xlsx')
@@ -141,7 +160,7 @@ def main():
     average_price = int(sum(prices) / len(prices)) if prices else 0
 
     # "이상없음" 항목 필터링 및 가격 데이터 추출
-    normal_items = [item for item in data if item['가격 비교'] == '이상없음']
+    normal_items = [item for item in data if item['가격 비교'] == '이상없음' and item['상태'] == '판매중']
     normal_prices = [int(item['가격'].replace('원', '').replace(',', '')) for item in normal_items]
 
     # "이상없음" 항목의 평균 가격 계산
@@ -150,18 +169,32 @@ def main():
     # 평균 가격 차이 계산
     price_difference = abs(average_normal_price - average_price)
 
-    # "이상없음" 항목 중 가장 높은 가격과 가장 낮은 가격 찾기
-    highest_price = max(normal_prices) if normal_prices else 0
-    lowest_price = min(normal_prices) if normal_prices else 0
+    # "이상없음" 항목 중 가장 낮은 가격을 가지는 아이템 찾기
+    lowest_price_item, lowest_price = find_extreme_price_item(normal_items, '가격', is_highest=False)
+
+    # "이상없음" 항목 중 가장 높은 가격을 가지는 아이템 찾기
+    highest_price_item, highest_price = find_extreme_price_item(normal_items, '가격', is_highest=True)
 
     # 결과 출력
     print(f"전체 평균 가격: {average_price}")
-    print(f"'이상없음' 항목의 평균 가격: {average_normal_price}")
+    print(f"기준치 이내 중 판매중인 항목의 평균 가격: {average_normal_price}")
     print(f"평균 가격 차이: {price_difference}")
-    print(f"'이상없음' 항목 중 가장 높은 가격: {highest_price}")
-    print(f"'이상없음' 항목 중 가장 낮은 가격: {lowest_price}")
+    if highest_price_item:
+        highest_price_url = highest_price_item['링크']
+        print(f"기준치 이내 중 판매중인 항목 중 가장 높은 가격: {highest_price}")
+        print(f"기준치 이내 중 판매중인 항목 중 가장 높은 가격을 가지는 아이템의 URL: {highest_price_url}")
+    else:
+        print("가장 높은 가격을 가지는 아이템이 없습니다.")
+    
+    if lowest_price_item:
+        lowest_price_url = lowest_price_item['링크']
+        print(f"기준치 이내 중 판매중인 항목 중 가장 낮은 가격: {lowest_price}")
+        print(f"기준치 이내 중 판매중인 항목 중 가장 낮은 가격을 가지는 아이템의 URL: {lowest_price_url}")
+    else:
+        print("가장 낮은 가격을 가지는 아이템이 없습니다.")
 
     crawler.save_to_excel(data, 'bungaganto_data.xlsx')
+
 
 if __name__ == "__main__":
     main()

@@ -95,9 +95,12 @@ class naver_market(InfoCrawler):
             os.makedirs(directory)
         df.to_excel(os.path.join(directory, 'naver_market.xlsx'), index=False)
 
-# 메인 실행 부분
-if __name__ == "__main__":
+def main():
     crawler = naver_market()
     second_data, new_data = crawler.get_code()  # 데이터 추출
+    print("제품명     : " + str(second_data))
+    print("네이버 최저가  : "+ str(new_data))
     crawler.save_to_excel(second_data, new_data)  # 엑셀로 저장
 
+
+main()

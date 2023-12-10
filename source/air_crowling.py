@@ -1,20 +1,22 @@
 # 이 페이지는 인천 국제 항공 공사의 지역별 여객 데이터를 가져올 예정입니다.
 # 가져온 데이터는 엑셀로 받아와 ../data/air 폴더에 저장할 예정입니다.
+# 영어 주석 연습중입니다!
 
 import os
 import random
+import pandas as pd
+
 from time import sleep
-# from datetime import *
+from io import StringIO
+from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-from bs4 import BeautifulSoup
-import pandas as pd
-from io import StringIO
 
-# 기본적인 크롤링에 필요한 우회 계정 정보 (수정 필요 없음)
+
+# Crawling User Setting
 class InfoCrawler():
     def __init__(self):
         self.base_url = ""
@@ -51,131 +53,125 @@ class InfoCrawler():
         self.headers['User-Agent'] = user_agent
         return user_agent
 
+# Crawling & Download Data
 class air_Crawler(InfoCrawler):
-
     def __init__(self):
+        # Define Crawling Setting
         super().__init__()
-        self.base_url = "https://www.airport.kr/co/"
+        self.base_url = "https://www.airport.kr/co/"                # Target
         self.headers = {
             'User-Agent': '',
             'referer': "https://www.airport.kr/co/",
             'Cache-Control': 'no-cache',
             'Content-Type': 'application/x-www-form-urlencoded',
         }
-        self.set_random_user_agent()
-        # 다운로드 경로 설정
-        download_path = os.path.join(os.getcwd(), 'data', 'air')
-        # 해당 경로에 폴더가 없으면 생성
-        if not os.path.exists(download_path):
-            os.makedirs(download_path)
-        #
+        # Define ChromeOptions
         options = ChromeOptions()
-        options.add_argument(f"user-agent={self.headers['User-Agent']}")
+        options.add_argument(f"user-agent={self.headers['User-Agent']}")        # Use Random User in User Setting
         options.add_argument("lang=ko_KR")
-        # 로그 레벨을 SEVERE로 설정   => 심각한 오류만 표기됨
-        options.add_argument('--log-level=3')
-        # headless 모드 비활성화
-        # options.add_argument('headless')
+        options.add_argument('--log-level=3')           # Logging Mark Serious Errors Only
+        # options.add_argument('headless')              # Run Onground
         options.add_argument("start-maximized")
         options.add_argument("disable-gpu")
         options.add_argument("--no-sandbox")
-        options.add_experimental_option('prefs', {
-            "download.default_directory": download_path,  # 다운로드 경로 설정
-            "download.prompt_for_download": False,  # 다운로드시 자동으로 저장
-            "download.directory_upgrade": True,
-            "safebrowsing.enabled": True
-        })
 
-        # 크롬 드라이버 최신 버전 설정
+        # Install and route the latest Chrome driver from Chrome Driver Manager
         service = ChromeService(executable_path=ChromeDriverManager().install())
 
-        # chrome driver
+        # Set chrome driver
         self.driver = webdriver.Chrome(service=service, options=options)
 
-        # 항공청사 웹 페이지 열기
+        # Download Data Location
+        download_path = os.path.join(os.getcwd(), 'data', 'air')
+        # Check Folder Location
+        if not os.path.exists(download_path):
+            os.makedirs(download_path)
+
+        # Open Target URL in Selenium
         self.driver.get(self.base_url)
 
-        # 홍보센터 메뉴 찾기
+        # Find Menu "홍보센터" & Click
         sleep(2)
         menu = self.driver.find_element(By.LINK_TEXT, "홍보센터")
-
-        # 클릭 이벤트
         menu.click()
 
-        # 홍보센터 메뉴 찾기
+        # Find Menu "항공통계" & Click
         menu2 = self.driver.find_element(By.LINK_TEXT, "항공통계")
-        # 클릭 이벤트
         menu2.click()
 
-        # 인천공항통계 보기
+        # Find Menu "인천공항 통계보기" & Click
         menu3 = self.driver.find_element(By.LINK_TEXT, "인천공항 통계보기")
         menu3.click()
 
-        # 지역별통계 보기
+        # Find Menu "지역별통계" & Click
         menu4 = self.driver.find_element(By.LINK_TEXT, "지역별통계")
         menu4.click()
 
-        # 여기 아래부터는 직접 생각해보시면서 작성해보세요
-        # 남은건 날짜 (월, 년별 지정하는 것, 검색버튼 누르기 , 출력된 결과값들을 가져오기)
-        
+
+        # Setting year range want to download
         start_year = 2017
         end_year = 2022
-        # 연도별 옵션 인덱스 계산 (역순)
+
+        # Search & Parsing for Data
         for year in range(start_year, end_year + 1):
+            # Calculation for element index (reverse)
+            # example : 2017 => 2(index)
             year_option_index = end_year - year + 2
 
-            # 시작 연도 선택
+            # Set Start Year
             self.driver.find_element(By.CSS_SELECTOR, "#S_YEAR")
             self.driver.find_element(By.XPATH, f'//*[@id="S_YEAR"]/option[{year_option_index}]').click()
 
-            # 시작 월 선택 (1월 고정)
+            # Set Start Month (January)
             self.driver.find_element(By.CSS_SELECTOR, "#S_MONTH")
             self.driver.find_element(By.XPATH, '//*[@id="S_MONTH"]/option[1]').click()
 
-            # 종료 연도 선택
+            # Set End Year
             self.driver.find_element(By.CSS_SELECTOR, "#E_YEAR")
             self.driver.find_element(By.XPATH, f'//*[@id="E_YEAR"]/option[{year_option_index}]').click()
 
-            # 종료 월 선택 (12월 고정)
+            # Set End Month (December)
             self.driver.find_element(By.CSS_SELECTOR, '#E_MONTH')
             self.driver.find_element(By.XPATH, '//*[@id="E_MONTH"]/option[12]').click()
-            sleep(3)
-            # 검색 버튼 클릭
+            sleep(1)
+
+            # Find Search Botton & Click
             self.driver.find_element(By.ID,"btnSearch").click()
-            # 갱신된 html 코드 다운로드
-            # 이후 html 에서 execel 추출
-            # 페이지의 HTML 코드 가져오기
+            
+            # Get Page HTML Code
             page_source = self.driver.page_source
 
-            # HTML 콘텐츠를 파싱합니다
+            # Start Parsing HTML Code 
             soup = BeautifulSoup(page_source, 'html.parser')
 
-            # 지정된 클래스를 가진 테이블을 찾습니다
+            # Find Table Class Have Aviation Statistics Data
             table = soup.find('table', {'class': 'table vt-dark pd0'})
 
-            # HTML 테이블을 문자열로 변환한 후 StringIO 객체에 래핑합니다
+            # Convert HTML Table to String
             table_html = str(table)
+            # Using StringIO, Data is Upload In Memory Buffer like file
             table_io = StringIO(table_html)
 
-            # HTML 테이블을 DataFrame으로 변환합니다
+            # Convert HTML Table to DataFrame
             df = pd.read_html(table_io)[0]
 
-            # 멀티레벨 컬럼 헤더를 단일 레벨로 평탄화합니다
+            # 다중 인덱스 컬럼을 단일 인덱스 컬럼으로 변환(KR)
+            # Converting Multiple Index Columns To Single Index Columns(EN)     
             df.columns = [' '.join(col).strip() for col in df.columns.values]
 
-            # 수정된 DataFrame을 Excel 파일로 저장합니다
+            # Save Converted DataFrame To Excel
+            # Location : ../data/air/{year}.xlsx
             excel_path = download_path +"/"+ str(year_option_index+2015)+'.xlsx'
             df.to_excel(excel_path, index=False)
-
-            #sleep(30)
-            # 다운로드 버튼 클릭
-            #self.driver.find_element(By.CLASS_NAME, "btn-type-small.point.ico.download").click()
         
-        sleep(10)
-        # 웹 드라이버 종료
+        sleep(2)
+        # Quit Selenium Driver
         self.driver.quit()
 
+# main
 def main():
     crawler = air_Crawler()
 
-main();
+
+if __name__ == "__main__":
+    main()

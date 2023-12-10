@@ -1,14 +1,15 @@
 # 이 페이지는 중고나라 사이트에서 데이터를 가져오는데 사용할 예정입니다.
 # 이 소스코드를 통한 부산물은 ../data/jounggonara에 저장할 예정입니다.
+# 영어 주석 연습중입니다.
 
-
-import requests
-import random
-from bs4 import BeautifulSoup
-import pandas as pd
 import os
+import random
+import requests
+import pandas as pd
 
+from bs4 import BeautifulSoup
 
+# Crawling User Setting
 class InfoCrawler():
     def __init__(self):
         self.base_url = ""
@@ -35,7 +36,8 @@ class InfoCrawler():
         user_agent = random.choice(self.user_agent_list)
         self.headers['User-Agent'] = user_agent
         return user_agent
-
+    
+# Crawling & Download Data
 class naver_market(InfoCrawler):
 
     def __init__(self):
@@ -50,57 +52,68 @@ class naver_market(InfoCrawler):
         self.get_code()
 
     def get_code(self):
-        query = "32QN650"
-        target_URL = self.base_url + query
-        response = requests.get(target_URL, headers=self.headers)
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
+        query = "32QN650"                                               # Product Serial Number To Search 
+        target_URL = self.base_url + query                              # Set URL Query
+        response = requests.get(target_URL, headers=self.headers)       # Get Target URL Request
+        soup = BeautifulSoup(response.text, 'html.parser')              # Start Parsing HTML Code 
 
         first_selector = "div#content > div > div:nth-of-type(2) > div > div:nth-of-type(3) > div"
-        items = soup.select(first_selector)
+        items = soup.select(first_selector)                             # item is Save the data in (div)
 
-        second_selector_data = []  # 두 번째 선택자로 추출한 데이터를 저장할 리스트
-        new_selector_data = []     # 새로운 선택자로 추출한 데이터를 저장할 리스트
+        Product_name_data = []          # Product Name 
+        Product_price_data = []         # Product Price
 
         for item in items:
-            # 두 번째 선택자
+            # Find Product Name
             second_selector = "div > div:nth-of-type(2) > div > a"
             second_elements = item.select(second_selector)
             for element in second_elements:
-                second_selector_data.append(element.get_text())
+                Product_name_data.append(element.get_text())
 
-            # 새로운 선택자
+            # Find Product Price
             new_selector = "div > div:nth-of-type(2) > div:nth-of-type(2) > strong > span > span > em"
             new_elements = item.select(new_selector)
             for new_element in new_elements:
-                new_selector_data.append(new_element.get_text())
+                Product_price_data.append(new_element.get_text())
 
-        return second_selector_data, new_selector_data
+        return Product_name_data, Product_price_data
 
-    def save_to_excel(self, second_data, new_data):
-        max_length = max(len(second_data), len(new_data))
-        
-        # 두 데이터 리스트의 길이를 맞춤
-        second_data += [''] * (max_length - len(second_data))
-        new_data += [''] * (max_length - len(new_data))
-
-        data = {
-            'Second Selector Data': second_data,
-            'New Selector Data': new_data
-        }
-        df = pd.DataFrame(data)
-        current_directory = os.getcwd()
-        directory = os.path.join(current_directory, 'data', 'naver_market')
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        df.to_excel(os.path.join(directory, 'naver_market.xlsx'), index=False)
+# Save Data to Excel
+def save_to_excel(Product_name_data, Product_price_data):
+    max_length = max(len(Product_name_data), len(Product_price_data))
+    
+    # Set Length Of Both Data Lists [to 1]
+    Product_name_data += [''] * (max_length - len(Product_name_data))
+    Product_price_data += [''] * (max_length - len(Product_price_data))
+    data = {
+        '제품명': Product_name_data,
+        '최저가': Product_price_data
+    }
+    df = pd.DataFrame(data)
+    # Download Data Location
+    directory = os.path.join(os.getcwd(), 'data', 'naver_market')
+    # Check Folder Location
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    df.to_excel(os.path.join(directory, 'naver_market.xlsx'), index=False)                  # Add Filename To Download Path & Save Excel
 
 def main():
+    # Run Crawler
     crawler = naver_market()
-    second_data, new_data = crawler.get_code()  # 데이터 추출
-    print("제품명     : " + str(second_data))
-    print("네이버 최저가  : "+ str(new_data))
-    crawler.save_to_excel(second_data, new_data)  # 엑셀로 저장
+    Product_name_data, Product_price_data = crawler.get_code() 
+    product = Product_name_data[0]                                          # Convert Product Name List To String
+    price = int(Product_price_data[0].replace(',', ''))                     # Convert Product Price List To String After Remove ','
+
+    price_with_comma = "{:,}".format(price)                                 # Add commas every thousand units
+    lower_result = price // 2
+    higher_result = price * 2
+
+    print("제품명     : " + product)
+    print("네이버 최저가  : " + price_with_comma+"원")
+    print("데이터 이상치 범위 : " + "{:,}".format(lower_result) + " ~ " + "{:,}".format(higher_result))
+
+    save_to_excel(Product_name_data, Product_price_data)  # Save to Excel
 
 
-main()
+if __name__ == "__main__":
+    main()

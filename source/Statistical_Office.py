@@ -1,10 +1,12 @@
 # 이 페이지는 통계청 페이지에서 값을 가져오는 코드입니다.
 # 통계청 페이지에서 값을 가져오고 난 뒤, 값은 엑셀로 ../data/Statustical_Office 폴더에 저장할 예정입니다.
+# 이 파일의 경우 웹 페이지상의 문제로 코드 작성이 중단되었습니다.
+# 데이터 보존을 위해 남겨두었습니다. (주석 미첨부)
+
 
 import os
 import random
 from time import sleep
-# from datetime import *
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -113,9 +115,9 @@ class Statistical_Office_Crawler(InfoCrawler):
 
         # 새 탭으로 전환
         sleep(2)  
-        all_windows = self.driver.window_handles  # 모든 탭의 핸들을 가져옵니다.
-        new_tab = all_windows[1]  # 새 탭의 핸들을 얻습니다. (0은 처음 탭, 1은 새 탭)
-        self.driver.switch_to.window(new_tab)  # 새 탭으로 전환합니다.
+        all_windows = self.driver.window_handles 
+        new_tab = all_windows[1] 
+        self.driver.switch_to.window(new_tab)  
 
         # 새 탭에서 작업을 계속합니다.
         sleep(2)
@@ -129,9 +131,9 @@ class Statistical_Office_Crawler(InfoCrawler):
 
         # 클릭시 새로운 크롬 창이 열림
         sleep(5)
-        all_windows = self.driver.window_handles  # 모든 탭의 핸들을 가져옴
-        new_window = all_windows[-1]  # 새 창의 핸들 획득 (-1 : 새 창)
-        self.driver.switch_to.window(new_window)  # 새 창으로 전환
+        all_windows = self.driver.window_handles 
+        new_window = all_windows[-1]
+        self.driver.switch_to.window(new_window) 
 
         # 로딩창 조건 대기용 함수
         def loading_invisible(driver):
@@ -166,5 +168,6 @@ class Statistical_Office_Crawler(InfoCrawler):
         # 웹 드라이버 종료
         self.driver.quit()
 
-
-crawler = Statistical_Office_Crawler()
+# 코드 동작 실행 막기 위해 작성하였습니다.
+# crawler = Statistical_Office_Crawler()
+print("이 파일은 웹 페이지 설정으로 인해 크롤링 코드 작성을 중단하였습니다.\n 자세한건 README를 참조하세요")

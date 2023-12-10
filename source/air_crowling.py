@@ -10,6 +10,9 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
+import pandas as pd
+from io import StringIO
 
 # 기본적인 크롤링에 필요한 우회 계정 정보 (수정 필요 없음)
 class InfoCrawler():
@@ -136,14 +139,43 @@ class air_Crawler(InfoCrawler):
             # 종료 월 선택 (12월 고정)
             self.driver.find_element(By.CSS_SELECTOR, '#E_MONTH')
             self.driver.find_element(By.XPATH, '//*[@id="E_MONTH"]/option[12]').click()
-
             sleep(3)
+            # 검색 버튼 클릭
+            self.driver.find_element(By.ID,"btnSearch").click()
+            # 갱신된 html 코드 다운로드
+            # 이후 html 에서 execel 추출
+            # 페이지의 HTML 코드 가져오기
+            page_source = self.driver.page_source
+
+            # HTML 콘텐츠를 파싱합니다
+            soup = BeautifulSoup(page_source, 'html.parser')
+
+            # 지정된 클래스를 가진 테이블을 찾습니다
+            table = soup.find('table', {'class': 'table vt-dark pd0'})
+
+            # HTML 테이블을 문자열로 변환한 후 StringIO 객체에 래핑합니다
+            table_html = str(table)
+            table_io = StringIO(table_html)
+
+            # HTML 테이블을 DataFrame으로 변환합니다
+            df = pd.read_html(table_io)[0]
+
+            # 멀티레벨 컬럼 헤더를 단일 레벨로 평탄화합니다
+            df.columns = [' '.join(col).strip() for col in df.columns.values]
+
+            # 수정된 DataFrame을 Excel 파일로 저장합니다
+            excel_path = download_path +"/"+ str(year_option_index+2015)+'.xlsx'
+            df.to_excel(excel_path, index=False)
+
+            #sleep(30)
             # 다운로드 버튼 클릭
-            self.driver.find_element(By.CLASS_NAME, "btn-type-small.point.ico.download").click()
+            #self.driver.find_element(By.CLASS_NAME, "btn-type-small.point.ico.download").click()
         
         sleep(10)
         # 웹 드라이버 종료
         self.driver.quit()
 
+def main():
+    crawler = air_Crawler()
 
-crawler = air_Crawler()
+main();

@@ -5,8 +5,19 @@
 # 아래 코드는 기존 데이터 있을 경우 압축 처리 진행해줄 코드입니다.
 
 import os
+import sys
 import shutil
 from datetime import datetime
+
+# soure file import
+current_directory = os.getcwd()
+sys.path.insert(0, current_directory)
+from source import air_crowling
+from source import bungaganto
+from source import data
+from source import jounggonara
+from source import naver_market
+
 
 def compress_data_folder(root_folder):
     data_folder = os.path.join(root_folder, 'data')
@@ -29,8 +40,38 @@ def compress_data_folder(root_folder):
     else:
         print("/data 폴더가 존재하지 않습니다.")
 
-# 프로젝트 루트 폴더 경로
-project_root = os.getcwd()
+# 기존 data 폴더 삭제 및 삭제 
+print("=============================================")
+print("기존 데이터가 있는지 확인하고, 있을 경우 데이터 백업처리를 진행합니다.")
+compress_data_folder(current_directory)
 
-# 함수 실행
-compress_data_folder(project_root)
+# air_crowling.py   실행
+print("=============================================")
+print("항공 데이터 crowling is start (onground)")
+air_crowling.main()
+print("항공 데이터 is complete")
+
+# data.py   실행
+print("=============================================")
+print("항공 데이터 분석&시각화 is start (background)")
+data.main()
+print("항공 데이터 분석&시각화 is complete")
+
+# naver_market.py 실행
+print("=============================================")
+print("네이버 마켓 crowling is start (background)")
+naver_market.main()
+print("네이버 마켓 is complete")
+
+# bungaganto.py 실행
+print("=============================================")
+print("번개장터 crowling is start (background)")
+bungaganto.main()
+print("번개장터 is complete")
+
+# jounggonara.py 실행
+print("=============================================")
+print("중고나라 crowling is start (background)")
+jounggonara.main()
+print("중고나라 is complete")
+

@@ -6,7 +6,7 @@ Project 기획 주제
 2. 중고 거래 사이트 (네이버카페 - 중고나라, 번개장터)에서 거래중인 품목의 가격을 비교하여 최저가 검색 (request 이용)
 
 Project를 함에 있어 필요한 라이브러리 및 SW (기획 단계 / 변동사항 없음)
-1. Python 3
+1. Python 3   
 2. request
 3. selenium
 4. bs4
